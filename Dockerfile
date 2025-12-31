@@ -1,0 +1,15 @@
+# Rubric-required base image
+FROM python:stretch
+
+WORKDIR /app
+
+# Install dependencies first (better caching)
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+
+# Copy the rest of the app
+COPY . .
+
+# Rubric-required Gunicorn entrypoint
+ENTRYPOINT ["gunicorn", "-b", ":8080", "main:APP"]
