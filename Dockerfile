@@ -1,5 +1,5 @@
 # Rubric-required base image
-FROM python:stretch
+FROM public.ecr.aws/docker/library/python:3.7-stretch
 
 WORKDIR /app
 
