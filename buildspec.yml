@@ -17,9 +17,8 @@ phases:
       # For example, a 1.21 kubectl client works with Kubernetes 1.20, 1.21 and 1.22 clusters.
       # Ref: https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html OR https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
       # To download a specific version v1.27.9 on Linux, use:
-      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.9/2024-01-04/bin/linux/amd64/kubectl
-      # Download the kubectl checksum file
-      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.9/2024-01-04/bin/linux/amd64/kubectl.sha256
+      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.32.7/2025-08-03/bin/linux/amd64/kubectl
+      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.32.7/2025-08-03/bin/linux/amd64/kubectl.sha256
       # Validate the kubectl binary against the checksum file
       - sha256sum -c kubectl.sha256
       # Install kubectl
@@ -31,7 +30,12 @@ phases:
       - echo `kubectl version --short --client`
       - python -m pip install --upgrade --force pip
       - wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add
-      - apt-get update && apt-get -y install jq  && pip install --upgrade awscli pytest
+      - echo "Disabling Corretto apt repo (expired key in old images)"
+      - rm -f /etc/apt/sources.list.d/corretto.list /etc/apt/sources.list.d/amazon-corretto.list || true
+      - sed -i '/apt\.corretto\.aws/d' /etc/apt/sources.list || true
+      - apt-get update
+      - apt-get -y install jq
+      - pip install --upgrade awscli pytest
   pre_build:
     commands:
       - TAG="$REPOSITORY_NAME.$REPOSITORY_BRANCH.$ENVIRONMENT_NAME.$(date +%Y-%m-%d.%H.%M.%S).$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 8)"
@@ -40,6 +44,8 @@ phases:
       - export KUBECONFIG=$HOME/.kube/config
       - echo `ls -l`
       - pip install -r requirements.txt
+      - pytest -q
+
   build:
     commands:
       - docker build --tag $REPOSITORY_URI:$TAG .
